@@ -1,7 +1,7 @@
 package br.com.valeria.conversormoedas.service;
 
+import br.com.valeria.conversormoedas.model.Conversao;
 import com.google.gson.Gson;
-import com.valeria.model.Conversao;
 
 import java.io.IOException;
 import java.net.URI;
@@ -29,9 +29,18 @@ public class ConversorService {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        
+        if (response.statusCode() != 200) {
+            throw new IOException("Erro na API: " + response.statusCode() + " - " + response.body());
+        }
+        
         Gson gson = new Gson();
         Conversao conversao = gson.fromJson(response.body(), Conversao.class);
         Double taxa = conversao.getTaxa(moedaDestino);
+        
+        if (taxa == null) {
+            throw new IOException("Moeda não encontrada ou não suportada pela API");
+        }
 
         return valor * taxa;
     }
